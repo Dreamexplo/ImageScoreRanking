@@ -5,27 +5,32 @@ Main Streamlit application with Supabase integration
 """
 
 import streamlit as st
-import database as db
-from config_initialization import initialize_all
-from scoring import calculate_scores
-from visualization import plot_group_comparison, plot_individual_comparison, plot_scoring_trends, plot_scoring_details
+from supabase import create_client, Client
 import pandas as pd
 import io
 
-# 初始化数据（仅在首次运行时）
-if 'db_initialized' not in st.session_state:
+# 从 Streamlit secrets 中加载 Supabase 配置
+SUPABASE_URL = st.secrets["supabase"]["url"]
+SUPABASE_KEY = st.secrets["supabase"]["key"]
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# 初始化数据库，假设初始化仅用于创建表或其他数据库相关设置
+def initialize_db():
     try:
-        initialize_all()
-        st.session_state.db_initialized = True
+        # 在此处加入需要初始化的数据库操作（例如创建表、验证连接等）
+        # 这里只是一个示例，具体操作取决于你的数据库结构和需求
+        # 如果 Supabase 上的表结构已创建，则不需要额外操作
+        pass
     except Exception as e:
         st.error(f"初始化失败: {e}")
 
+# 登录页面
 def login_page():
     st.title("登录")
     username = st.text_input("用户名")
     password = st.text_input("密码", type="password")
     if st.button("登录"):
-        user = db.get_user(username)
+        user = db.get_user(username)  # 假设 db.get_user 已从 Supabase 获取用户
         if user and user['password'] == password:
             st.session_state.user = user
             st.session_state.logged_in = True
@@ -33,6 +38,7 @@ def login_page():
         else:
             st.error("用户名或密码错误")
 
+# 注册页面
 def register_page():
     st.title("注册")
     with st.form("register_form"):
@@ -47,6 +53,7 @@ def register_page():
             else:
                 st.error("用户名已存在")
 
+# 修改密码
 def change_password():
     st.title("修改密码")
     user = st.session_state.user
@@ -69,6 +76,7 @@ def change_password():
             else:
                 st.error("原密码错误")
 
+# 管理员后台
 def admin_panel():
     st.title("管理员后台")
     admin_pwd = st.text_input("管理员密码", type="password")
@@ -137,6 +145,7 @@ def admin_panel():
     with tab4:
         visualize_page()
 
+# 评分页面
 def scoring_page(user):
     st.title("评分页面")
     if "Student" in user['roles']:
@@ -161,6 +170,7 @@ def scoring_page(user):
         else:
             st.warning("请完成所有评分")
 
+# 数据可视化页面
 def visualize_page():
     st.header("数据可视化")
     scores = db.get_all_scores()
@@ -177,6 +187,7 @@ def visualize_page():
         selected_user = st.selectbox("选择查看用户", df['username'].unique())
         st.plotly_chart(plot_scoring_details(selected_user))
 
+# 主程序
 def main():
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
@@ -213,5 +224,7 @@ def main():
     if st.sidebar.button("查看结果"):
         visualize_page()
 
+# 启动主程序
 if __name__ == "__main__":
     main()
+
