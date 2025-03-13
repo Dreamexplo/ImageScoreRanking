@@ -6,18 +6,19 @@ Main Streamlit application with Supabase integration
 
 import streamlit as st
 import database as db
-#from config_initialization import initialize_groups, initialize_users
+from config_initialization import initialize_all
 from scoring import calculate_scores
 from visualization import plot_group_comparison, plot_individual_comparison, plot_scoring_trends, plot_scoring_details
 import pandas as pd
 import io
 
 # 初始化数据（仅在首次运行时）
-#if 'db_initialized' not in st.session_state:
-    # 假设 Supabase 表已手动创建，此处仅初始化示例数据
-   # initialize_groups()
-   # initialize_users()
-   # st.session_state.db_initialized = True
+if 'db_initialized' not in st.session_state:
+    try:
+        initialize_all()
+        st.session_state.db_initialized = True
+    except Exception as e:
+        st.error(f"初始化失败: {e}")
 
 def login_page():
     st.title("登录")
@@ -56,11 +57,13 @@ def change_password():
         if st.form_submit_button("确认修改"):
             if old_pwd == user['password']:
                 if new_pwd == confirm_pwd:
-                    db.update_password(user['username'], new_pwd)
-                    st.session_state.user['password'] = new_pwd
-                    st.success("密码修改成功！请重新登录")
-                    st.session_state.logged_in = False
-                    st.rerun()
+                    if db.update_password(user['username'], new_pwd):
+                        st.session_state.user['password'] = new_pwd
+                        st.success("密码修改成功！请重新登录")
+                        st.session_state.logged_in = False
+                        st.rerun()
+                    else:
+                        st.error("密码修改失败")
                 else:
                     st.error("新密码与确认密码不一致")
             else:
@@ -87,8 +90,10 @@ def admin_panel():
         groups = db.get_groups()
         selected_group = st.selectbox("选择要删除的组别", groups)
         if st.button("删除组别"):
-            db.delete_group(selected_group)
-            st.success(f"组别 {selected_group} 已删除")
+            if db.delete_group(selected_group):
+                st.success(f"组别 {selected_group} 已删除")
+            else:
+                st.error("删除失败")
 
     with tab2:
         st.subheader("用户管理")
@@ -97,8 +102,10 @@ def admin_panel():
         new_pwd = st.text_input("新密码", type="password")
         if st.button("重置密码"):
             if new_pwd:
-                db.update_password(selected_user, new_pwd)
-                st.success(f"{selected_user} 的密码已重置")
+                if db.update_password(selected_user, new_pwd):
+                    st.success(f"{selected_user} 的密码已重置")
+                else:
+                    st.error("密码重置失败")
             else:
                 st.error("请输入新密码")
 
@@ -147,8 +154,10 @@ def scoring_page(user):
         if all(value > 0 for value in scores.values()):
             confirm = st.radio("确认提交？", ["确认", "再想想"])
             if confirm == "确认":
-                db.save_scores(user['username'], scores)
-                st.success("评分已成功提交！")
+                if db.save_scores(user['username'], scores):
+                    st.success("评分已成功提交！")
+                else:
+                    st.error("评分提交失败")
         else:
             st.warning("请完成所有评分")
 
@@ -206,4 +215,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
