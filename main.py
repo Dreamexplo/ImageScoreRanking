@@ -5,14 +5,77 @@ Main Streamlit application with Supabase integration
 """
 
 import streamlit as st
-from supabase import create_client, Client
 import pandas as pd
 import io
+from supabase import create_client, Client
+import database as db
+from config_initialization import initialize_all  # 如果有初始化操作
+from scoring import calculate_scores
+from visualization import plot_group_comparison, plot_individual_comparison, plot_scoring_trends, plot_scoring_details
 
-# 从 Streamlit secrets 中加载 Supabase 配置
+# 从 Streamlit secrets 中获取 Supabase 配置
 SUPABASE_URL = st.secrets["supabase"]["url"]
 SUPABASE_KEY = st.secrets["supabase"]["key"]
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# 创建 Supabase 客户端
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# 初始化数据库连接
+class Database:
+    def __init__(self, supabase_client):
+        self.supabase = supabase_client
+
+    def get_user(self, username):
+        response = self.supabase.table("users").select("*").eq("username", username).execute()
+        return response.data[0] if response.data else None
+
+    def create_user(self, username, realname, roles, group, password):
+        response = self.supabase.table("users").insert({
+            "username": username,
+            "realname": realname,
+            "roles": roles,
+            "group": group,
+            "password": password
+        }).execute()
+        return response.status == 201
+
+    def get_all_users(self):
+        response = self.supabase.table("users").select("*").execute()
+        return response.data if response.data else []
+
+    def update_password(self, username, new_password):
+        response = self.supabase.table("users").update({
+            "password": new_password
+        }).eq("username", username).execute()
+        return response.status == 200
+
+    def save_scores(self, rater, scores):
+        data = [{"rater": rater, "target": target, "score": score} for target, score in scores.items()]
+        response = self.supabase.table("scores").upsert(data).execute()
+        return response.status == 200
+
+    def get_all_scores(self):
+        response = self.supabase.table("scores").select("*").execute()
+        return response.data if response.data else []
+
+    def get_groups(self):
+        response = self.supabase.table("groups").select("name").execute()
+        return [group['name'] for group in response.data] if response.data else []
+
+    def create_group(self, group_name):
+        response = self.supabase.table("groups").insert({"name": group_name}).execute()
+        return response.status == 201
+
+    def delete_group(self, group_name):
+        response = self.supabase.table("groups").delete().eq("name", group_name).execute()
+        return response.status == 200
+
+    def get_students_exclude_group(self, group):
+        response = self.supabase.table("users").select("*").neq("group", group).execute()
+        return response.data if response.data else []
+
+# 在程序启动时实例化数据库对象
+db = Database(supabase)
 
 # 初始化数据库，假设初始化仅用于创建表或其他数据库相关设置
 def initialize_db():
