@@ -6,18 +6,18 @@ Main Streamlit application with Supabase integration
 
 import streamlit as st
 import database as db
-from config_initialization import initialize_groups, initialize_users
+#from config_initialization import initialize_groups, initialize_users
 from scoring import calculate_scores
 from visualization import plot_group_comparison, plot_individual_comparison, plot_scoring_trends, plot_scoring_details
 import pandas as pd
 import io
 
 # 初始化数据（仅在首次运行时）
-if 'db_initialized' not in st.session_state:
+#if 'db_initialized' not in st.session_state:
     # 假设 Supabase 表已手动创建，此处仅初始化示例数据
-    initialize_groups()
-    initialize_users()
-    st.session_state.db_initialized = True
+   # initialize_groups()
+   # initialize_users()
+   # st.session_state.db_initialized = True
 
 def login_page():
     st.title("登录")
