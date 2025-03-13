@@ -40,14 +40,16 @@ def create_user(username, realname, roles, group, password):
         "username": username, "realname": realname, "roles": roles,
         "group_name": group, "password": encrypted_pwd, "modified": 0
     }
+    client = get_supabase_client()
     try:
-        response = supabase.table("users").insert(data).execute()
+        response = client.table("users").insert(data).execute()
         return bool(response.data)
     except:
         return False
 
 def get_user(username):
-    response = supabase.table("users").select("*").eq("username", username).execute()
+    client = get_supabase_client()
+    response = client.table("users").select("*").eq("username", username).execute()
     if response.data:
         user = response.data[0]
         user["password"] = cipher.decrypt(user["password"].encode()).decode()
@@ -56,31 +58,37 @@ def get_user(username):
     return None
 
 def update_password(username, new_password):
+    client = get_supabase_client()
     encrypted_pwd = cipher.encrypt(new_password.encode()).decode()
-    response = supabase.table("users").update({"password": encrypted_pwd, "modified": 1}).eq("username", username).execute()
+    response = client.table("users").update({"password": encrypted_pwd, "modified": 1}).eq("username", username).execute()
     return bool(response.data)
 
 def create_group(group_name):
+    client = get_supabase_client()
     try:
-        response = supabase.table("groups").insert({"group_name": group_name}).execute()
+        response = client.table("groups").insert({"group_name": group_name}).execute()
         return bool(response.data)
     except:
         return False
 
 def get_groups():
-    response = supabase.table("groups").select("group_name").execute()
+    client = get_supabase_client()
+    response = client.table("groups").select("group_name").execute()
     return [row["group_name"] for row in response.data]
 
 def delete_group(group_name):
-    supabase.table("groups").delete().eq("group_name", group_name).execute()
+    client = get_supabase_client()
+    client.table("groups").delete().eq("group_name", group_name).execute()
 
 def save_scores(rater, scores):
+    client = get_supabase_client()
     for target, score in scores.items():
         data = {"rater": rater, "target": target, "score": score}
-        supabase.table("scores").upsert(data).execute()
+        client.table("scores").upsert(data).execute()
 
 def get_all_users():
-    response = supabase.table("users").select("*").execute()
+    client = get_supabase_client()
+    response = client.table("users").select("*").execute()
     return [
         {
             "username": row["username"], "realname": row["realname"],
@@ -91,9 +99,11 @@ def get_all_users():
     ]
 
 def get_students_exclude_group(group):
-    response = supabase.table("users").select("username, realname, group_name").neq("group_name", group).ilike("roles", "%Student%").execute()
+    client = get_supabase_client()
+    response = client.table("users").select("username, realname, group_name").neq("group_name", group).ilike("roles", "%Student%").execute()
     return [{"username": row["username"], "realname": row["realname"], "group": row["group_name"]} for row in response.data]
 
 def get_all_scores():
-    response = supabase.table("scores").select("*").execute()
+    client = get_supabase_client()
+    response = client.table("scores").select("*").execute()
     return [{"rater": row["rater"], "target": row["target"], "score": row["score"], "timestamp": row["timestamp"]} for row in response.data]
