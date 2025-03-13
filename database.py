@@ -12,9 +12,9 @@ import os
 
 # 从 Streamlit secrets 获取 Supabase 配置
 try:
-    url = st.secrets["supabase"]["url"]
-    key = st.secrets["supabase"]["key"]
-    ENCRYPTION_KEY = st.secrets["supabase"]["ENCRYPTION_KEY"]
+    url = st.secrets["supabase"]["https://klktoorwaidyziqxyaoh.supabase.co"]
+    key = st.secrets["supabase"]["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa3Rvb3J3YWlkeXppcXh5YW9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4MzQ2MjIsImV4cCI6MjA1NzQxMDYyMn0.-iABpnkMLbZiorz50nyZAmstk9dT2-UyFXTVty5YtBQ"]
+    ENCRYPTION_KEY = st.secrets["supabase"]["iqlcwN7Dx8p1Pi8AR7z-xyBKEW5IGQneCunqfYQCe2Q="]
 except KeyError as e:
     st.error(f"Secrets 配置错误: 缺少 {e} 键。请检查 Streamlit Secrets 设置。")
     url = key = ENCRYPTION_KEY = None
