@@ -13,7 +13,7 @@ import os
 # 从 Streamlit secrets 获取 Supabase 配置
 url = st.secrets.get("supabase", {}).get("https://klktoorwaidyziqxyaoh.supabase.co", "")
 key = st.secrets.get("supabase", {}).get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa3Rvb3J3YWlkeXppcXh5YW9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4MzQ2MjIsImV4cCI6MjA1NzQxMDYyMn0.-iABpnkMLbZiorz50nyZAmstk9dT2-UyFXTVty5YtBQ", "")
-supabase = create_client(url, key)
+
 
 # 加密密钥（通过环境变量或 secrets 配置）
 ENCRYPTION_KEY = os.environ.get("iqlcwN7Dx8p1Pi8AR7z-xyBKEW5IGQneCunqfYQCe2Q=", Fernet.generate_key())
