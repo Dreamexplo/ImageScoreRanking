@@ -10,6 +10,9 @@ import pandas as pd
 from cryptography.fernet import Fernet
 import os
 
+# 调试 Secrets 加载
+st.write("Debug - Full Secrets:", dict(st.secrets))
+
 # 从 Streamlit secrets 获取 Supabase 配置
 url = st.secrets.get("supabase", {}).get("https://klktoorwaidyziqxyaoh.supabase.co", "")
 key = st.secrets.get("supabase", {}).get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa3Rvb3J3YWlkeXppcXh5YW9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4MzQ2MjIsImV4cCI6MjA1NzQxMDYyMn0.-iABpnkMLbZiorz50nyZAmstk9dT2-UyFXTVty5YtBQ", "")
