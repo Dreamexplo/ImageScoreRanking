@@ -16,7 +16,7 @@ key = st.secrets.get("supabase", {}).get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e
 supabase = create_client(url, key)
 
 # 加密密钥（通过环境变量或 secrets 配置）
-ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY", Fernet.generate_key())
+ENCRYPTION_KEY = os.environ.get("iqlcwN7Dx8p1Pi8AR7z-xyBKEW5IGQneCunqfYQCe2Q=", Fernet.generate_key())
 cipher = Fernet(ENCRYPTION_KEY)
 
 def initialize():
