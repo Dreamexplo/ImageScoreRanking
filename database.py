@@ -19,12 +19,20 @@ supabase = create_client(url, key)
 ENCRYPTION_KEY = os.environ.get("iqlcwN7Dx8p1Pi8AR7z-xyBKEW5IGQneCunqfYQCe2Q=", Fernet.generate_key())
 cipher = Fernet(ENCRYPTION_KEY)
 
+# 全局变量，延迟初始化
+supabase = None
+
+def get_supabase_client():
+    global supabase
+    if supabase is None:
+        if not url or not key:
+            st.error(f"Supabase configuration invalid - URL: {url}, Key: {key[:10]}...")
+            raise ValueError("Supabase URL or Key is missing")
+        supabase = create_client(url, key)
+    return supabase
+
 def initialize():
-    # Supabase 表应提前在 Supabase Dashboard 创建
-    # users: username (text, primary key), realname (text), roles (text), group_name (text), password (text), modified (int)
-    # groups: group_name (text, primary key)
-    # scores: rater (text), target (text), score (real), timestamp (timestamp), primary key (rater, target)
-    pass  # Supabase 不需要本地初始化，表结构由用户在云端创建
+    pass  # Supabase 不需要本地初始化
 
 def create_user(username, realname, roles, group, password):
     encrypted_pwd = cipher.encrypt(password.encode()).decode()
