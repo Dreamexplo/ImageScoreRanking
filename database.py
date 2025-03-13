@@ -11,9 +11,19 @@ from cryptography.fernet import Fernet
 import os
 
 # 从 Streamlit secrets 获取 Supabase 配置
-url = st.secrets["supabase"]["url"]
-key = st.secrets["supabase"]["key"]
-ENCRYPTION_KEY = st.secrets["ENCRYPTION_KEY"]
+try:
+    url = st.secrets["supabase"]["url"]
+    key = st.secrets["supabase"]["key"]
+    ENCRYPTION_KEY = st.secrets["supabase"]["ENCRYPTION_KEY"]  # 修正为嵌套访问
+except KeyError as e:
+    st.error(f"Secrets 配置错误: 缺少 {e} 键。请检查 Streamlit Secrets 设置。")
+    url = key = ENCRYPTION_KEY = None  # 避免未定义变量错误
+
+# 如果 Secrets 加载失败，提供默认值或退出
+if not all([url, key, ENCRYPTION_KEY]):
+    st.error("Supabase 配置不完整，无法初始化客户端。")
+    raise ValueError("Missing required Supabase configuration")
+
 cipher = Fernet(ENCRYPTION_KEY)
 
 # 延迟初始化 Supabase 客户端
