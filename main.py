@@ -14,8 +14,8 @@ from scoring import calculate_scores
 from visualization import plot_group_comparison, plot_individual_comparison, plot_scoring_trends, plot_scoring_details
 
 # 从 Streamlit secrets 中获取 Supabase 配置
-SUPABASE_URL = st.secrets["supabase"]["url"]
-SUPABASE_KEY = st.secrets["supabase"]["key"]
+SUPABASE_URL = st.secrets["supabase"]["https://klktoorwaidyziqxyaoh.supabase.co"]
+SUPABASE_KEY = st.secrets["supabase"]["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa3Rvb3J3YWlkeXppcXh5YW9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4MzQ2MjIsImV4cCI6MjA1NzQxMDYyMn0.-iABpnkMLbZiorz50nyZAmstk9dT2-UyFXTVty5YtBQ"]
 
 # 创建 Supabase 客户端
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
