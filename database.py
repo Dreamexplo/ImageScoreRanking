@@ -10,32 +10,28 @@ import pandas as pd
 from cryptography.fernet import Fernet
 import os
 
-# 调试 Secrets 加载
-st.write("Debug - Full Secrets:", dict(st.secrets))
-
 # 从 Streamlit secrets 获取 Supabase 配置
-url = st.secrets.get("supabase", {}).get("https://klktoorwaidyziqxyaoh.supabase.co", "")
-key = st.secrets.get("supabase", {}).get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa3Rvb3J3YWlkeXppcXh5YW9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4MzQ2MjIsImV4cCI6MjA1NzQxMDYyMn0.-iABpnkMLbZiorz50nyZAmstk9dT2-UyFXTVty5YtBQ", "")
-
-
-# 加密密钥（通过环境变量或 secrets 配置）
-ENCRYPTION_KEY = os.environ.get("iqlcwN7Dx8p1Pi8AR7z-xyBKEW5IGQneCunqfYQCe2Q=", Fernet.generate_key())
+url = st.secrets["supabase"]["url"]
+key = st.secrets["supabase"]["key"]
+ENCRYPTION_KEY = st.secrets["ENCRYPTION_KEY"]
 cipher = Fernet(ENCRYPTION_KEY)
 
-# 全局变量，延迟初始化
+# 延迟初始化 Supabase 客户端
 supabase = None
 
 def get_supabase_client():
     global supabase
     if supabase is None:
-        if not url or not key:
-            st.error(f"Supabase configuration invalid - URL: {url}, Key: {key[:10]}...")
-            raise ValueError("Supabase URL or Key is missing")
-        supabase = create_client(url, key)
+        try:
+            supabase = create_client(url, key)
+        except Exception as e:
+            st.error(f"Failed to initialize Supabase client: {e}")
+            raise
     return supabase
 
 def initialize():
-    pass  # Supabase 不需要本地初始化
+    # Supabase 表应在 Dashboard 提前创建
+    pass
 
 def create_user(username, realname, roles, group, password):
     encrypted_pwd = cipher.encrypt(password.encode()).decode()
@@ -43,70 +39,106 @@ def create_user(username, realname, roles, group, password):
         "username": username, "realname": realname, "roles": roles,
         "group_name": group, "password": encrypted_pwd, "modified": 0
     }
-    client = get_supabase_client()
     try:
+        client = get_supabase_client()
         response = client.table("users").insert(data).execute()
         return bool(response.data)
-    except:
+    except Exception as e:
+        st.error(f"Error creating user {username}: {e}")
         return False
 
 def get_user(username):
-    client = get_supabase_client()
-    response = client.table("users").select("*").eq("username", username).execute()
-    if response.data:
-        user = response.data[0]
-        user["password"] = cipher.decrypt(user["password"].encode()).decode()
-        user["roles"] = user["roles"].split(",")
-        return user
-    return None
+    try:
+        client = get_supabase_client()
+        response = client.table("users").select("*").eq("username", username).execute()
+        if response.data:
+            user = response.data[0]
+            user["password"] = cipher.decrypt(user["password"].encode()).decode()
+            user["roles"] = user["roles"].split(",")
+            return user
+        return None
+    except Exception as e:
+        st.error(f"Error fetching user {username}: {e}")
+        return None
 
 def update_password(username, new_password):
-    client = get_supabase_client()
     encrypted_pwd = cipher.encrypt(new_password.encode()).decode()
-    response = client.table("users").update({"password": encrypted_pwd, "modified": 1}).eq("username", username).execute()
-    return bool(response.data)
+    try:
+        client = get_supabase_client()
+        response = client.table("users").update({"password": encrypted_pwd, "modified": 1}).eq("username", username).execute()
+        return bool(response.data)
+    except Exception as e:
+        st.error(f"Error updating password for {username}: {e}")
+        return False
 
 def create_group(group_name):
-    client = get_supabase_client()
     try:
+        client = get_supabase_client()
         response = client.table("groups").insert({"group_name": group_name}).execute()
         return bool(response.data)
-    except:
+    except Exception as e:
+        st.error(f"Error creating group {group_name}: {e}")
         return False
 
 def get_groups():
-    client = get_supabase_client()
-    response = client.table("groups").select("group_name").execute()
-    return [row["group_name"] for row in response.data]
+    try:
+        client = get_supabase_client()
+        response = client.table("groups").select("group_name").execute()
+        return [row["group_name"] for row in response.data]
+    except Exception as e:
+        st.error(f"Error fetching groups: {e}")
+        return []
 
 def delete_group(group_name):
-    client = get_supabase_client()
-    client.table("groups").delete().eq("group_name", group_name).execute()
+    try:
+        client = get_supabase_client()
+        client.table("groups").delete().eq("group_name", group_name).execute()
+        return True
+    except Exception as e:
+        st.error(f"Error deleting group {group_name}: {e}")
+        return False
 
 def save_scores(rater, scores):
-    client = get_supabase_client()
-    for target, score in scores.items():
-        data = {"rater": rater, "target": target, "score": score}
-        client.table("scores").upsert(data).execute()
+    try:
+        client = get_supabase_client()
+        for target, score in scores.items():
+            data = {"rater": rater, "target": target, "score": score}
+            client.table("scores").upsert(data).execute()
+        return True
+    except Exception as e:
+        st.error(f"Error saving scores for {rater}: {e}")
+        return False
 
 def get_all_users():
-    client = get_supabase_client()
-    response = client.table("users").select("*").execute()
-    return [
-        {
-            "username": row["username"], "realname": row["realname"],
-            "roles": row["roles"].split(","), "group": row["group_name"],
-            "password": cipher.decrypt(row["password"].encode()).decode()
-        }
-        for row in response.data
-    ]
+    try:
+        client = get_supabase_client()
+        response = client.table("users").select("*").execute()
+        return [
+            {
+                "username": row["username"], "realname": row["realname"],
+                "roles": row["roles"].split(","), "group": row["group_name"],
+                "password": cipher.decrypt(row["password"].encode()).decode()
+            }
+            for row in response.data
+        ]
+    except Exception as e:
+        st.error(f"Error fetching all users: {e}")
+        return []
 
 def get_students_exclude_group(group):
-    client = get_supabase_client()
-    response = client.table("users").select("username, realname, group_name").neq("group_name", group).ilike("roles", "%Student%").execute()
-    return [{"username": row["username"], "realname": row["realname"], "group": row["group_name"]} for row in response.data]
+    try:
+        client = get_supabase_client()
+        response = client.table("users").select("username, realname, group_name").neq("group_name", group).ilike("roles", "%Student%").execute()
+        return [{"username": row["username"], "realname": row["realname"], "group": row["group_name"]} for row in response.data]
+    except Exception as e:
+        st.error(f"Error fetching students excluding group {group}: {e}")
+        return []
 
 def get_all_scores():
-    client = get_supabase_client()
-    response = client.table("scores").select("*").execute()
-    return [{"rater": row["rater"], "target": row["target"], "score": row["score"], "timestamp": row["timestamp"]} for row in response.data]
+    try:
+        client = get_supabase_client()
+        response = client.table("scores").select("*").execute()
+        return [{"rater": row["rater"], "target": row["target"], "score": row["score"], "timestamp": row["timestamp"]} for row in response.data]
+    except Exception as e:
+        st.error(f"Error fetching all scores: {e}")
+        return []
