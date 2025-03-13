@@ -1,0 +1,8 @@
+project/
+├── config_initialization.py  # 初始化用户和组
+├── database.py              # Supabase 数据库操作
+├── main.py                  # 主应用
+├── scoring.py               # 分数计算
+├── visualization.py         # 数据可视化
+├── requirements.txt         # 依赖
+└── .streamlit/secrets.toml  # Supabase 配置（本地测试用）
